@@ -9,14 +9,24 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import customtkinter as ctk
 from git import Repo, GitCommandError
-from PIL import Image
+from PIL import Image, ImageTk
 import schedule
+
+# Set native macOS Dock Icon & Process Title via AppKit
+ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
+try:
+    from AppKit import NSApplication, NSImage
+    app_icon_path = os.path.join(ASSETS_DIR, "app_icon.png")
+    if os.path.exists(app_icon_path):
+        ns_app = NSApplication.sharedApplication()
+        ns_img = NSImage.alloc().initWithContentsOfFile_(app_icon_path)
+        ns_app.setApplicationIconImage_(ns_img)
+except Exception:
+    pass
 
 # CustomTkinter Configuration
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("blue")
-
-ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 
 COMMON_TIMEZONES = [
     "Asia/Kolkata (IST)",
@@ -72,6 +82,16 @@ class ModernAutoCommitterApp(ctk.CTk):
         self.geometry("1120x780")
         self.minsize(980, 680)
 
+        # Set Window Icon
+        app_icon_path = os.path.join(ASSETS_DIR, "app_icon.png")
+        if os.path.exists(app_icon_path):
+            try:
+                icon_img = Image.open(app_icon_path)
+                self._photo_icon = ImageTk.PhotoImage(icon_img)
+                self.wm_iconphoto(True, self._photo_icon)
+            except Exception:
+                pass
+
         # State Variables
         self.is_running = False
         self.scheduler_thread = None
@@ -122,7 +142,7 @@ class ModernAutoCommitterApp(ctk.CTk):
         self.after(100, self.process_log_queue)
         self.after(1000, self.update_live_clock)
 
-        self.log("INFO", "Mixwellx Modern Dashboard loaded with Flaticon vector icons.")
+        self.log("INFO", "AutoUpdate Pro initialized with custom application icon & AppKit Dock integration.")
 
     def setup_grid_layout(self):
         self.grid_columnconfigure(1, weight=1)
