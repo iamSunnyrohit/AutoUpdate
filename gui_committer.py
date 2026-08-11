@@ -7,6 +7,16 @@ import time
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+# Fix macOS Tk 8.6 NSApplication macOSVersion crash
+try:
+    from AppKit import NSApplication
+    def _macOSVersion(self):
+        return (14, 0, 0)
+    if not hasattr(NSApplication, "macOSVersion"):
+        NSApplication.macOSVersion = _macOSVersion
+except Exception:
+    pass
+
 import customtkinter as ctk
 from git import Repo, GitCommandError
 from PIL import Image, ImageTk
