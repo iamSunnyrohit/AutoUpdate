@@ -9,11 +9,14 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import customtkinter as ctk
 from git import Repo, GitCommandError
+from PIL import Image
 import schedule
 
 # CustomTkinter Configuration
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("blue")
+
+ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 
 COMMON_TIMEZONES = [
     "Asia/Kolkata (IST)",
@@ -36,6 +39,17 @@ PRESET_MESSAGES = [
 ]
 
 
+def load_flaticon_image(icon_filename, size=(20, 20)):
+    path = os.path.join(ASSETS_DIR, icon_filename)
+    if os.path.exists(path):
+        try:
+            pil_img = Image.open(path)
+            return ctk.CTkImage(light_image=pil_img, dark_image=pil_img, size=size)
+        except Exception:
+            return None
+    return None
+
+
 def clean_tz_name(tz_display):
     return tz_display.split(" ")[0]
 
@@ -55,7 +69,7 @@ class ModernAutoCommitterApp(ctk.CTk):
         super().__init__()
 
         self.title("AutoUpdate Pro — Mixwellx Modern Dashboard")
-        self.geometry("1100x760")
+        self.geometry("1120x780")
         self.minsize(980, 680)
 
         # State Variables
@@ -87,6 +101,17 @@ class ModernAutoCommitterApp(ctk.CTk):
 
         self.configure(fg_color=self.bg_main)
 
+        # Preload Flaticon UI Icons
+        self.img_bolt = load_flaticon_image("icon_bolt.png", size=(24, 24))
+        self.img_dash = load_flaticon_image("icon_dashboard.png", size=(18, 18))
+        self.img_heatmap = load_flaticon_image("icon_heatmap.png", size=(18, 18))
+        self.img_logs = load_flaticon_image("icon_logs.png", size=(18, 18))
+        self.img_folder = load_flaticon_image("icon_folder.png", size=(16, 16))
+        self.img_clock = load_flaticon_image("icon_clock.png", size=(16, 16))
+        self.img_play = load_flaticon_image("icon_play.png", size=(18, 18))
+        self.img_stop = load_flaticon_image("icon_stop.png", size=(18, 18))
+        self.img_push = load_flaticon_image("icon_push.png", size=(18, 18))
+
         self.setup_grid_layout()
         self.build_sidebar()
         self.build_main_header()
@@ -97,14 +122,14 @@ class ModernAutoCommitterApp(ctk.CTk):
         self.after(100, self.process_log_queue)
         self.after(1000, self.update_live_clock)
 
-        self.log("INFO", "Mixwellx Modern Dashboard initialized. Default timezone set to Indian Standard Time (IST).")
+        self.log("INFO", "Mixwellx Modern Dashboard loaded with Flaticon vector icons.")
 
     def setup_grid_layout(self):
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
     def build_sidebar(self):
-        self.sidebar = ctk.CTkFrame(self, fg_color=self.bg_sidebar, width=220, corner_radius=0)
+        self.sidebar = ctk.CTkFrame(self, fg_color=self.bg_sidebar, width=230, corner_radius=0)
         self.sidebar.grid(row=0, column=0, sticky="nsew")
         self.sidebar.grid_rowconfigure(7, weight=1)
 
@@ -112,8 +137,11 @@ class ModernAutoCommitterApp(ctk.CTk):
         brand_frame = ctk.CTkFrame(self.sidebar, fg_color="transparent")
         brand_frame.pack(padx=20, pady=(25, 20), anchor="w")
 
-        brand_icon = ctk.CTkLabel(brand_frame, text="⚡", font=("SF Pro Display", 24))
-        brand_icon.pack(side="left", padx=(0, 8))
+        if self.img_bolt:
+            brand_icon = ctk.CTkLabel(brand_frame, image=self.img_bolt, text="")
+        else:
+            brand_icon = ctk.CTkLabel(brand_frame, text="⚡", font=("SF Pro Display", 24))
+        brand_icon.pack(side="left", padx=(0, 10))
 
         brand_title = ctk.CTkLabel(brand_frame, text="AutoUpdate", font=("SF Pro Display", 18, "bold"), text_color=self.text_primary)
         brand_title.pack(side="left")
@@ -137,45 +165,51 @@ class ModernAutoCommitterApp(ctk.CTk):
         # Sidebar Divider
         ctk.CTkFrame(self.sidebar, height=1, fg_color=self.card_border).pack(fill="x", padx=15, pady=(0, 15))
 
-        # Navigation Links
+        # Navigation Links with Flaticon PNG icons
         self.nav_btn_dash = ctk.CTkButton(
             self.sidebar,
-            text="📊  Dashboard",
+            text="  Dashboard",
+            image=self.img_dash,
+            compound="left",
             font=("SF Pro Text", 13, "bold"),
             fg_color=self.accent_indigo,
             text_color="#ffffff",
             hover_color="#4f46e5",
             anchor="w",
             corner_radius=8,
-            height=38,
+            height=40,
             command=lambda: self.switch_tab("dash"),
         )
         self.nav_btn_dash.pack(fill="x", padx=15, pady=4)
 
         self.nav_btn_heatmap = ctk.CTkButton(
             self.sidebar,
-            text="📅  Streak Heatmap",
+            text="  Streak Heatmap",
+            image=self.img_heatmap,
+            compound="left",
             font=("SF Pro Text", 13),
             fg_color="transparent",
             text_color=self.text_secondary,
             hover_color=self.card_bg,
             anchor="w",
             corner_radius=8,
-            height=38,
+            height=40,
             command=lambda: self.switch_tab("heatmap"),
         )
         self.nav_btn_heatmap.pack(fill="x", padx=15, pady=4)
 
         self.nav_btn_logs = ctk.CTkButton(
             self.sidebar,
-            text="📜  Real-time Logs",
+            text="  Real-time Logs",
+            image=self.img_logs,
+            compound="left",
             font=("SF Pro Text", 13),
             fg_color="transparent",
             text_color=self.text_secondary,
             hover_color=self.card_bg,
             anchor="w",
             corner_radius=8,
-            height=38,
+            height=40,
             command=lambda: self.switch_tab("logs"),
         )
         self.nav_btn_logs.pack(fill="x", padx=15, pady=4)
@@ -184,7 +218,13 @@ class ModernAutoCommitterApp(ctk.CTk):
         tz_card = ctk.CTkFrame(self.sidebar, fg_color=self.card_bg, corner_radius=12, border_width=1, border_color=self.card_border)
         tz_card.pack(side="bottom", fill="x", padx=15, pady=20)
 
-        ctk.CTkLabel(tz_card, text="LIVE TIME (IST)", font=("SF Pro Text", 10, "bold"), text_color=self.accent_cyan).pack(padx=12, pady=(10, 2), anchor="w")
+        tz_header = ctk.CTkFrame(tz_card, fg_color="transparent")
+        tz_header.pack(padx=12, pady=(10, 2), anchor="w")
+
+        if self.img_clock:
+            ctk.CTkLabel(tz_header, image=self.img_clock, text="").pack(side="left", padx=(0, 6))
+        ctk.CTkLabel(tz_header, text="LIVE TIME (IST)", font=("SF Pro Text", 10, "bold"), text_color=self.accent_cyan).pack(side="left")
+
         self.clock_lbl = ctk.CTkLabel(tz_card, text="00:00:00 IST", font=("SF Pro Display", 14, "bold"), text_color=self.text_primary)
         self.clock_lbl.pack(padx=12, pady=(0, 10), anchor="w")
 
@@ -206,11 +246,13 @@ class ModernAutoCommitterApp(ctk.CTk):
         # Action Buttons Header
         self.quick_commit_btn = ctk.CTkButton(
             header_frame,
-            text="⚡ Commit & Push Now",
+            text=" Commit & Push Now",
+            image=self.img_push,
+            compound="left",
             font=("SF Pro Text", 12, "bold"),
             fg_color=self.accent_purple,
             hover_color="#7c3aed",
-            height=36,
+            height=38,
             corner_radius=8,
             command=self.commit_now,
         )
@@ -286,7 +328,7 @@ class ModernAutoCommitterApp(ctk.CTk):
         self.repo_entry.insert(0, os.getcwd())
         self.repo_entry.pack(side="left", fill="x", expand=True, padx=(0, 8))
 
-        browse_btn = ctk.CTkButton(repo_row, text="Browse", width=70, height=35, fg_color="#334155", hover_color="#475569", command=self.browse_repo)
+        browse_btn = ctk.CTkButton(repo_row, text="Browse", image=self.img_folder, compound="left", width=85, height=35, fg_color="#334155", hover_color="#475569", command=self.browse_repo)
         browse_btn.pack(side="right")
 
         # Timezone Dropdown
@@ -349,24 +391,28 @@ class ModernAutoCommitterApp(ctk.CTk):
 
         self.start_btn = ctk.CTkButton(
             act_box,
-            text="▶ START AUTOMATION",
+            text=" START AUTOMATION",
+            image=self.img_play,
+            compound="left",
             font=("SF Pro Text", 12, "bold"),
             fg_color=self.accent_emerald,
             hover_color="#059669",
-            height=40,
+            height=42,
             corner_radius=8,
             command=self.start_scheduler,
         )
-        self.start_btn.pack(side="left", fill="x", expand=True, padx=(0, 6))
+        self.start_btn.pack(side="left", fill="x", expand=True, padx=(0, 8))
 
         self.stop_btn = ctk.CTkButton(
             act_box,
-            text="⏹ STOP",
-            width=90,
+            text=" STOP",
+            image=self.img_stop,
+            compound="left",
+            width=95,
             font=("SF Pro Text", 12, "bold"),
             fg_color=self.accent_rose,
             hover_color="#e11d48",
-            height=40,
+            height=42,
             corner_radius=8,
             state="disabled",
             command=self.stop_scheduler,
@@ -386,7 +432,6 @@ class ModernAutoCommitterApp(ctk.CTk):
             anchor="w", pady=(0, 15)
         )
 
-        # Heatmap Grid Frame (7 rows x 20 columns)
         grid_card = ctk.CTkFrame(container, fg_color=self.bg_sidebar, corner_radius=12)
         grid_card.pack(fill="both", expand=True, padx=10, pady=10)
 
@@ -396,14 +441,12 @@ class ModernAutoCommitterApp(ctk.CTk):
         for row in range(7):
             row_tiles = []
             for col in range(20):
-                # Randomize initial background slightly for preview feel
                 init_color = colors[0] if (row + col) % 3 != 0 else colors[1]
                 tile = ctk.CTkFrame(grid_card, width=22, height=22, fg_color=init_color, corner_radius=4)
                 tile.grid(row=row, column=col, padx=3, pady=3)
                 row_tiles.append(tile)
             self.tile_widgets.append(row_tiles)
 
-        # Legend
         legend_frame = ctk.CTkFrame(grid_card, fg_color="transparent")
         legend_frame.grid(row=8, column=0, columnspan=20, sticky="e", pady=(15, 0))
 
@@ -413,7 +456,6 @@ class ModernAutoCommitterApp(ctk.CTk):
         ctk.CTkLabel(legend_frame, text="More", font=("SF Pro Text", 10), text_color=self.text_secondary).pack(side="left", padx=4)
 
     def trigger_heatmap_update(self):
-        # Light up random tiles to simulate active contribution graph
         colors = ["#006d32", "#26a641", "#39d353"]
         r = random.randint(0, 6)
         c = random.randint(0, 19)
