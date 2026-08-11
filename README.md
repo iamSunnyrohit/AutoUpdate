@@ -35,12 +35,13 @@ Runs automatically on GitHub servers once daily.
 
 A desktop control panel with background threading, visual status indicators, real-time log terminal, and timezone selection.
 
-#### Installation & Launch:
+#### Installation:
 ```bash
-# 1. Install dependencies
-pip install gitpython schedule
+python3 -m pip install gitpython schedule
+```
 
-# 2. Launch Desktop GUI App
+#### Launch Desktop GUI App:
+```bash
 python3 gui_committer.py
 ```
 
@@ -58,8 +59,9 @@ python3 gui_committer.py
 
 Lightweight interactive terminal application.
 
-#### Launch:
+#### Installation & Launch:
 ```bash
+python3 -m pip install gitpython schedule
 python3 auto_committer.py
 ```
 1. Select your target timezone (IST, UTC, or custom).
