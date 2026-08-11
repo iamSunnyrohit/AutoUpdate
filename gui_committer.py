@@ -2,7 +2,8 @@ import os
 import queue
 import threading
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
@@ -10,13 +11,39 @@ from tkinter.scrolledtext import ScrolledText
 from git import Repo, GitCommandError
 import schedule
 
+COMMON_TIMEZONES = [
+    "Asia/Kolkata (IST)",
+    "UTC",
+    "America/New_York (EST/EDT)",
+    "America/Los_Angeles (PST/PDT)",
+    "Europe/London (GMT/BST)",
+    "Europe/Paris (CET/CEST)",
+    "Asia/Tokyo (JST)",
+    "Asia/Dubai (GST)",
+    "Australia/Sydney (AEST/AEDT)",
+]
+
+
+def clean_tz_name(tz_display):
+    return tz_display.split(" ")[0]
+
+
+def get_formatted_time(tz_name="Asia/Kolkata"):
+    try:
+        tz = ZoneInfo(tz_name)
+        now = datetime.now(tz)
+        return now.strftime("%Y-%m-%d %H:%M:%S %Z (UTC%z)"), now
+    except Exception:
+        now = datetime.now(timezone.utc)
+        return now.strftime("%Y-%m-%d %H:%M:%S UTC"), now
+
 
 class AutoCommitterGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("GitHub Auto-Committer Desktop App")
-        self.root.geometry("820x680")
-        self.root.minsize(750, 600)
+        self.root.geometry("840x720")
+        self.root.minsize(780, 640)
 
         # State Variables
         self.is_running = False
@@ -28,6 +55,7 @@ class AutoCommitterGUI:
         self.next_commit_time = "N/A"
         self.interval_val = 1
         self.unit_val = "Minutes"
+        self.active_tz = "Asia/Kolkata"
 
         # Theme Colors (Dark Palette)
         self.bg_color = "#1e1e2e"
@@ -43,21 +71,18 @@ class AutoCommitterGUI:
         self.setup_styles()
         self.build_ui()
 
-        # Start log polling
         self.root.after(100, self.process_log_queue)
 
     def setup_styles(self):
         self.style = ttk.Style()
         self.style.theme_use("clam")
 
-        # Configure generic colors
         self.style.configure(".", background=self.bg_color, foreground=self.text_color, font=("Helvetica", 10))
         self.style.configure("Card.TFrame", background=self.card_bg, relief="flat")
         self.style.configure("Header.TLabel", background=self.bg_color, foreground="#f5e0dc", font=("Helvetica", 16, "bold"))
         self.style.configure("SubHeader.TLabel", background=self.card_bg, foreground=self.accent_color, font=("Helvetica", 11, "bold"))
-        self.style.configure("StatValue.TLabel", background=self.card_bg, foreground=self.success_color, font=("Helvetica", 14, "bold"))
+        self.style.configure("StatValue.TLabel", background=self.card_bg, foreground=self.success_color, font=("Helvetica", 13, "bold"))
 
-        # Custom Buttons
         self.style.configure(
             "Primary.TButton",
             font=("Helvetica", 10, "bold"),
@@ -111,7 +136,7 @@ class AutoCommitterGUI:
         config_card = ttk.Frame(self.root, style="Card.TFrame", padding=15)
         config_card.pack(fill="x", padx=20, pady=5)
 
-        ttk.Label(config_card, text="Repository & Target Configuration", style="SubHeader.TLabel").grid(row=0, column=0, columnspan=3, sticky="w", pady=(0, 10))
+        ttk.Label(config_card, text="Repository & Timezone Configuration", style="SubHeader.TLabel").grid(row=0, column=0, columnspan=3, sticky="w", pady=(0, 10))
 
         # Repo Path
         ttk.Label(config_card, text="Repository Path:", background=self.card_bg).grid(row=1, column=0, sticky="w", pady=4)
@@ -132,23 +157,29 @@ class AutoCommitterGUI:
         )
         browse_btn.grid(row=1, column=2, sticky="e", pady=4)
 
+        # Timezone Selection
+        ttk.Label(config_card, text="Target Timezone:", background=self.card_bg).grid(row=2, column=0, sticky="w", pady=4)
+        self.tz_combo = ttk.Combobox(config_card, values=COMMON_TIMEZONES, state="readonly", font=("Helvetica", 10))
+        self.tz_combo.set("Asia/Kolkata (IST)")
+        self.tz_combo.grid(row=2, column=1, columnspan=2, sticky="ew", padx=8, pady=4)
+
         # Target File
-        ttk.Label(config_card, text="Target Log File:", background=self.card_bg).grid(row=2, column=0, sticky="w", pady=4)
+        ttk.Label(config_card, text="Target Log File:", background=self.card_bg).grid(row=3, column=0, sticky="w", pady=4)
         self.target_file_entry = tk.Entry(config_card, bg="#313244", fg=self.text_color, insertbackground="white", relief="flat", font=("Helvetica", 10))
         self.target_file_entry.insert(0, "activity_log.txt")
-        self.target_file_entry.grid(row=2, column=1, columnspan=2, sticky="ew", padx=8, pady=4)
+        self.target_file_entry.grid(row=3, column=1, columnspan=2, sticky="ew", padx=8, pady=4)
 
         # Custom Commit Message
-        ttk.Label(config_card, text="Commit Message:", background=self.card_bg).grid(row=3, column=0, sticky="w", pady=4)
+        ttk.Label(config_card, text="Commit Message:", background=self.card_bg).grid(row=4, column=0, sticky="w", pady=4)
         self.msg_entry = tk.Entry(config_card, bg="#313244", fg=self.text_color, insertbackground="white", relief="flat", font=("Helvetica", 10))
         self.msg_entry.insert(0, "chore: automated activity update")
-        self.msg_entry.grid(row=3, column=1, columnspan=2, sticky="ew", padx=8, pady=4)
+        self.msg_entry.grid(row=4, column=1, columnspan=2, sticky="ew", padx=8, pady=4)
 
         # Schedule Settings
-        ttk.Label(config_card, text="Interval Frequency:", background=self.card_bg).grid(row=4, column=0, sticky="w", pady=4)
+        ttk.Label(config_card, text="Interval Frequency:", background=self.card_bg).grid(row=5, column=0, sticky="w", pady=4)
 
         freq_frame = ttk.Frame(config_card, style="Card.TFrame")
-        freq_frame.grid(row=4, column=1, columnspan=2, sticky="w", padx=8, pady=4)
+        freq_frame.grid(row=5, column=1, columnspan=2, sticky="w", padx=8, pady=4)
 
         self.interval_entry = tk.Entry(freq_frame, width=8, bg="#313244", fg=self.text_color, insertbackground="white", relief="flat", font=("Helvetica", 10))
         self.interval_entry.insert(0, "1")
@@ -189,25 +220,22 @@ class AutoCommitterGUI:
         stats_frame = ttk.Frame(self.root, padding=(20, 0, 20, 5))
         stats_frame.pack(fill="x")
 
-        # Stat 1: Total Commits
         s1 = ttk.Frame(stats_frame, style="Card.TFrame", padding=10)
         s1.pack(side="left", fill="x", expand=True, padx=(0, 5))
         ttk.Label(s1, text="Total Commits", background=self.card_bg, font=("Helvetica", 9)).pack()
         self.stat_commits_lbl = ttk.Label(s1, text="0", style="StatValue.TLabel")
         self.stat_commits_lbl.pack()
 
-        # Stat 2: Last Execution
         s2 = ttk.Frame(stats_frame, style="Card.TFrame", padding=10)
         s2.pack(side="left", fill="x", expand=True, padx=5)
         ttk.Label(s2, text="Last Commit", background=self.card_bg, font=("Helvetica", 9)).pack()
-        self.stat_last_lbl = ttk.Label(s2, text="Never", style="StatValue.TLabel", font=("Helvetica", 10, "bold"))
+        self.stat_last_lbl = ttk.Label(s2, text="Never", style="StatValue.TLabel")
         self.stat_last_lbl.pack()
 
-        # Stat 3: Next Scheduled Run
         s3 = ttk.Frame(stats_frame, style="Card.TFrame", padding=10)
         s3.pack(side="left", fill="x", expand=True, padx=(5, 0))
         ttk.Label(s3, text="Next Run", background=self.card_bg, font=("Helvetica", 9)).pack()
-        self.stat_next_lbl = ttk.Label(s3, text="N/A", style="StatValue.TLabel", font=("Helvetica", 10, "bold"))
+        self.stat_next_lbl = ttk.Label(s3, text="N/A", style="StatValue.TLabel")
         self.stat_next_lbl.pack()
 
         # Console Log View
@@ -227,13 +255,12 @@ class AutoCommitterGUI:
         )
         self.log_text.pack(fill="both", expand=True)
 
-        # Configure color tags for log display
         self.log_text.tag_config("SUCCESS", foreground=self.success_color)
         self.log_text.tag_config("ERROR", foreground=self.error_color)
         self.log_text.tag_config("INFO", foreground=self.accent_color)
         self.log_text.tag_config("WARN", foreground=self.warning_color)
 
-        self.log("INFO", "Application initialized ready. Configure settings above and click Start.")
+        self.log("INFO", "Application ready. Configured by default for Indian Standard Time (IST / Asia/Kolkata).")
 
     def browse_repo(self):
         selected_dir = filedialog.askdirectory(initialdir=self.repo_entry.get())
@@ -242,8 +269,9 @@ class AutoCommitterGUI:
             self.repo_entry.insert(0, selected_dir)
 
     def log(self, tag, message):
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        formatted = f"[{timestamp}] [{tag}] {message}\n"
+        tz_name = clean_tz_name(self.tz_combo.get())
+        timestamp_str, _ = get_formatted_time(tz_name)
+        formatted = f"[{timestamp_str}] [{tag}] {message}\n"
         self.log_queue.put((tag, formatted))
 
     def process_log_queue(self):
@@ -261,13 +289,15 @@ class AutoCommitterGUI:
             self.stat_next_lbl.config(text="N/A")
             return
 
-        now = datetime.now()
+        tz_name = clean_tz_name(self.tz_combo.get())
+        _, now_tz = get_formatted_time(tz_name)
+
         if self.unit_val == "Seconds":
-            next_t = now + timedelta(seconds=self.interval_val)
+            next_t = now_tz + timedelta(seconds=self.interval_val)
         elif self.unit_val == "Hours":
-            next_t = now + timedelta(hours=self.interval_val)
+            next_t = now_tz + timedelta(hours=self.interval_val)
         else:
-            next_t = now + timedelta(minutes=self.interval_val)
+            next_t = now_tz + timedelta(minutes=self.interval_val)
 
         self.next_commit_time = next_t.strftime("%H:%M:%S")
         self.stat_next_lbl.config(text=self.next_commit_time)
@@ -276,25 +306,26 @@ class AutoCommitterGUI:
         repo_path = self.repo_entry.get().strip()
         target_file = self.target_file_entry.get().strip() or "activity_log.txt"
         commit_msg = self.msg_entry.get().strip() or "chore: automated activity update"
+        tz_name = clean_tz_name(self.tz_combo.get())
 
         if not os.path.exists(repo_path):
             self.log("ERROR", f"Repository directory non-existent: {repo_path}")
             return False
 
         file_path = os.path.join(repo_path, target_file)
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        timestamp_str, now_tz = get_formatted_time(tz_name)
 
         try:
             # 1. Update target file
             with open(file_path, "a", encoding="utf-8") as f:
-                f.write(f"Updated at: {timestamp}\n")
+                f.write(f"Updated at: {timestamp_str}\n")
 
             # 2. Stage changes
             repo = Repo(repo_path)
             repo.git.add(target_file)
 
             # 3. Commit
-            full_msg = f"{commit_msg} [{timestamp}]"
+            full_msg = f"{commit_msg} [{timestamp_str}]"
             repo.index.commit(full_msg)
 
             # 4. Push
@@ -302,9 +333,8 @@ class AutoCommitterGUI:
             origin.push()
 
             self.total_commits += 1
-            self.last_commit_time = datetime.now().strftime("%H:%M:%S")
+            self.last_commit_time = now_tz.strftime("%H:%M:%S")
 
-            # Update stats on UI thread safely
             self.root.after(0, lambda: self.stat_commits_lbl.config(text=str(self.total_commits)))
             self.root.after(0, lambda: self.stat_last_lbl.config(text=self.last_commit_time))
 
@@ -336,21 +366,20 @@ class AutoCommitterGUI:
         self.is_running = True
         self.stop_event.clear()
 
-        # Update UI Controls
         self.status_badge.config(text="STATUS: RUNNING", bg=self.success_color)
         self.start_btn.config(state="disabled")
         self.stop_btn.config(state="normal")
         self.repo_entry.config(state="disabled")
         self.interval_entry.config(state="disabled")
+        self.tz_combo.config(state="disabled")
 
-        self.log("INFO", f"Auto-committer started. Running every {self.interval_val} {self.unit_val}.")
+        tz_name = clean_tz_name(self.tz_combo.get())
+        self.log("INFO", f"Auto-committer started. Running every {self.interval_val} {self.unit_val} [{tz_name}].")
 
-        # Perform initial commit
         self.log("INFO", "Performing initial start-up commit...")
         threading.Thread(target=self.perform_git_commit, daemon=True).start()
         self.update_next_run_time()
 
-        # Start worker thread
         self.scheduler_thread = threading.Thread(target=self.run_schedule_loop, daemon=True)
         self.scheduler_thread.start()
 
@@ -378,6 +407,7 @@ class AutoCommitterGUI:
         self.stop_btn.config(state="disabled")
         self.repo_entry.config(state="normal")
         self.interval_entry.config(state="normal")
+        self.tz_combo.config(state="readonly")
 
         self.stat_next_lbl.config(text="N/A")
         self.log("WARN", "Auto-committer schedule stopped by user.")

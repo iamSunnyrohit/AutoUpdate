@@ -2,8 +2,12 @@ name: Auto Commit
 
 on:
   schedule:
-    # Runs every day at 00:00 UTC (Adjust cron as needed)
-    - cron: '0 0 * * *'
+    # GitHub Actions cron uses UTC.
+    # IST (Indian Standard Time) is UTC + 05:30.
+    # To run at 00:00 IST (Midnight IST daily): 18:30 UTC -> '30 18 * * *'
+    # To run at 09:00 IST (9:00 AM IST daily): 03:30 UTC -> '30 3 * * *'
+    # To run at 21:00 IST (9:00 PM IST daily): 15:30 UTC -> '30 15 * * *'
+    - cron: '30 18 * * *' # Runs daily at 00:00 IST (Midnight Indian Time)
   workflow_dispatch: # Allows manual trigger from Actions tab
 
 jobs:
@@ -11,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      TARGET_TIMEZONE: "Asia/Kolkata" # Indian Standard Time (IST)
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
