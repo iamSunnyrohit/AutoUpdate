@@ -4,6 +4,7 @@ import queue
 import random
 import threading
 import time
+from collections import Counter
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -116,7 +117,7 @@ class ModernAutoCommitterApp(ctk.CTk):
         self.log_queue = queue.Queue()
 
         self.total_commits = 0
-        self.streak_days = 1
+        self.streak_days = 0
         self.last_commit_str = "Never"
         self.next_commit_str = "N/A"
         self.interval_val = 1
@@ -155,11 +156,12 @@ class ModernAutoCommitterApp(ctk.CTk):
         self.build_stats_cards()
         self.build_tabbed_workspace()
 
-        # Start Async Polling
+        # Start Async Polling & Initial Git Heatmap Render
         self.after(100, self.process_log_queue)
         self.after(1000, self.update_live_clock)
+        self.after(500, self.fetch_and_render_git_heatmap)
 
-        self.log("INFO", "AutoUpdate Pro initialized with custom application icon & AppKit Dock integration.")
+        self.log("INFO", "AutoUpdate Pro initialized. Git Heatmap active & connected to repository history.")
 
     def setup_grid_layout(self):
         self.grid_columnconfigure(1, weight=1)
@@ -170,7 +172,6 @@ class ModernAutoCommitterApp(ctk.CTk):
         self.sidebar.grid(row=0, column=0, sticky="nsew")
         self.sidebar.grid_rowconfigure(7, weight=1)
 
-        # Brand Header
         brand_frame = ctk.CTkFrame(self.sidebar, fg_color="transparent")
         brand_frame.pack(padx=20, pady=(25, 20), anchor="w")
 
@@ -186,7 +187,6 @@ class ModernAutoCommitterApp(ctk.CTk):
         pro_badge = ctk.CTkLabel(brand_frame, text=" PRO", font=("SF Pro Display", 10, "bold"), text_color=self.accent_indigo)
         pro_badge.pack(side="left")
 
-        # Status Pill Badge
         self.sidebar_status_badge = ctk.CTkLabel(
             self.sidebar,
             text="● SYSTEM STOPPED",
@@ -199,10 +199,8 @@ class ModernAutoCommitterApp(ctk.CTk):
         )
         self.sidebar_status_badge.pack(padx=20, pady=(0, 20), anchor="w")
 
-        # Sidebar Divider
         ctk.CTkFrame(self.sidebar, height=1, fg_color=self.card_border).pack(fill="x", padx=15, pady=(0, 15))
 
-        # Navigation Links with Flaticon PNG icons
         self.nav_btn_dash = ctk.CTkButton(
             self.sidebar,
             text="  Dashboard",
@@ -251,7 +249,6 @@ class ModernAutoCommitterApp(ctk.CTk):
         )
         self.nav_btn_logs.pack(fill="x", padx=15, pady=4)
 
-        # Clock & Timezone Widget at Sidebar Bottom
         tz_card = ctk.CTkFrame(self.sidebar, fg_color=self.card_bg, corner_radius=12, border_width=1, border_color=self.card_border)
         tz_card.pack(side="bottom", fill="x", padx=15, pady=20)
 
@@ -280,7 +277,6 @@ class ModernAutoCommitterApp(ctk.CTk):
         ctk.CTkLabel(title_box, text="Digital Activity & Streak Controller", font=("SF Pro Display", 22, "bold"), text_color=self.text_primary).pack(anchor="w")
         ctk.CTkLabel(title_box, text="Automate GitHub activity, monitor contribution trends, and schedule triggers.", font=("SF Pro Text", 12), text_color=self.text_secondary).pack(anchor="w")
 
-        # Action Buttons Header
         self.quick_commit_btn = ctk.CTkButton(
             header_frame,
             text=" Commit & Push Now",
@@ -311,7 +307,7 @@ class ModernAutoCommitterApp(ctk.CTk):
         c2 = ctk.CTkFrame(stats_container, fg_color=self.card_bg, corner_radius=12, border_width=1, border_color=self.card_border)
         c2.grid(row=0, column=1, sticky="ew", padx=4)
         ctk.CTkLabel(c2, text="Active Streak", font=("SF Pro Text", 11), text_color=self.text_secondary).pack(padx=15, pady=(12, 2), anchor="w")
-        self.card2_val = ctk.CTkLabel(c2, text="🔥 1 Day", font=("SF Pro Display", 22, "bold"), text_color=self.accent_indigo)
+        self.card2_val = ctk.CTkLabel(c2, text="🔥 0 Days", font=("SF Pro Display", 22, "bold"), text_color=self.accent_indigo)
         self.card2_val.pack(padx=15, pady=(0, 12), anchor="w")
 
         # Card 3: Last Commit Time
@@ -350,13 +346,11 @@ class ModernAutoCommitterApp(ctk.CTk):
     def build_dashboard_tab(self):
         self.tab_dash.columnconfigure((0, 1), weight=1)
 
-        # Left Column: Configuration
         cfg_frame = ctk.CTkFrame(self.tab_dash, fg_color="transparent")
         cfg_frame.grid(row=0, column=0, sticky="nsew", padx=15, pady=15)
 
         ctk.CTkLabel(cfg_frame, text="Repository & Output Settings", font=("SF Pro Display", 14, "bold"), text_color=self.accent_cyan).pack(anchor="w", pady=(0, 10))
 
-        # Repo Path Entry
         ctk.CTkLabel(cfg_frame, text="Git Repository Directory:", font=("SF Pro Text", 11), text_color=self.text_secondary).pack(anchor="w", pady=(5, 2))
         repo_row = ctk.CTkFrame(cfg_frame, fg_color="transparent")
         repo_row.pack(fill="x", pady=(0, 10))
@@ -368,25 +362,21 @@ class ModernAutoCommitterApp(ctk.CTk):
         browse_btn = ctk.CTkButton(repo_row, text="Browse", image=self.img_folder, compound="left", width=85, height=35, fg_color="#334155", hover_color="#475569", command=self.browse_repo)
         browse_btn.pack(side="right")
 
-        # Timezone Dropdown
         ctk.CTkLabel(cfg_frame, text="Target Timezone:", font=("SF Pro Text", 11), text_color=self.text_secondary).pack(anchor="w", pady=(5, 2))
         self.tz_combo = ctk.CTkComboBox(cfg_frame, values=COMMON_TIMEZONES, fg_color=self.bg_sidebar, border_color=self.card_border, height=35, font=("SF Pro Text", 11))
         self.tz_combo.set("Asia/Kolkata (IST)")
         self.tz_combo.pack(fill="x", pady=(0, 10))
 
-        # Target Log File
         ctk.CTkLabel(cfg_frame, text="Target Activity File:", font=("SF Pro Text", 11), text_color=self.text_secondary).pack(anchor="w", pady=(5, 2))
         self.target_file_entry = ctk.CTkEntry(cfg_frame, fg_color=self.bg_sidebar, border_color=self.card_border, font=("SF Pro Text", 11), height=35)
         self.target_file_entry.insert(0, "activity_log.txt")
         self.target_file_entry.pack(fill="x", pady=(0, 10))
 
-        # Right Column: Schedule & Presets
         sch_frame = ctk.CTkFrame(self.tab_dash, fg_color="transparent")
         sch_frame.grid(row=0, column=1, sticky="nsew", padx=15, pady=15)
 
         ctk.CTkLabel(sch_frame, text="Trigger Frequency & Message", font=("SF Pro Display", 14, "bold"), text_color=self.accent_indigo).pack(anchor="w", pady=(0, 10))
 
-        # Commit Message & Preset Picker
         ctk.CTkLabel(sch_frame, text="Commit Message:", font=("SF Pro Text", 11), text_color=self.text_secondary).pack(anchor="w", pady=(5, 2))
         self.msg_entry = ctk.CTkEntry(sch_frame, fg_color=self.bg_sidebar, border_color=self.card_border, font=("SF Pro Text", 11), height=35)
         self.msg_entry.insert(0, "chore: automated activity update")
@@ -409,7 +399,6 @@ class ModernAutoCommitterApp(ctk.CTk):
             )
             btn.pack(side="left", padx=2)
 
-        # Interval Unit & Value
         ctk.CTkLabel(sch_frame, text="Schedule Interval:", font=("SF Pro Text", 11), text_color=self.text_secondary).pack(anchor="w", pady=(5, 2))
         freq_row = ctk.CTkFrame(sch_frame, fg_color="transparent")
         freq_row.pack(fill="x", pady=(0, 15))
@@ -422,7 +411,6 @@ class ModernAutoCommitterApp(ctk.CTk):
         self.unit_combo.set("Minutes")
         self.unit_combo.pack(side="left")
 
-        # Primary Control Action Buttons
         act_box = ctk.CTkFrame(sch_frame, fg_color="transparent")
         act_box.pack(fill="x", pady=(10, 0))
 
@@ -462,41 +450,155 @@ class ModernAutoCommitterApp(ctk.CTk):
 
     def build_heatmap_tab(self):
         container = ctk.CTkFrame(self.tab_heatmap, fg_color="transparent")
-        container.pack(fill="both", expand=True, padx=20, pady=20)
+        container.pack(fill="both", expand=True, padx=20, pady=15)
 
-        ctk.CTkLabel(container, text="GitHub Activity Streak Grid", font=("SF Pro Display", 15, "bold"), text_color=self.accent_emerald).pack(anchor="w", pady=(0, 5))
-        ctk.CTkLabel(container, text="Visual contribution tiles tracking commits executed during active session.", font=("SF Pro Text", 11), text_color=self.text_secondary).pack(
-            anchor="w", pady=(0, 15)
+        # Header Row with Refresh Button
+        top_hdr = ctk.CTkFrame(container, fg_color="transparent")
+        top_hdr.pack(fill="x", pady=(0, 10))
+
+        titles_box = ctk.CTkFrame(top_hdr, fg_color="transparent")
+        titles_box.pack(side="left")
+
+        ctk.CTkLabel(titles_box, text="GitHub Contribution Heatmap", font=("SF Pro Display", 15, "bold"), text_color=self.accent_emerald).pack(anchor="w")
+        ctk.CTkLabel(titles_box, text="Real-time Git commit activity mapped directly from repository history.", font=("SF Pro Text", 11), text_color=self.text_secondary).pack(anchor="w")
+
+        sync_btn = ctk.CTkButton(
+            top_hdr,
+            text="🔄 Sync Git Log",
+            font=("SF Pro Text", 11, "bold"),
+            width=110,
+            height=32,
+            fg_color=self.accent_indigo,
+            hover_color="#4f46e5",
+            command=self.fetch_and_render_git_heatmap,
         )
+        sync_btn.pack(side="right")
 
+        # Main Heatmap Card
         grid_card = ctk.CTkFrame(container, fg_color=self.bg_sidebar, corner_radius=12)
-        grid_card.pack(fill="both", expand=True, padx=10, pady=10)
+        grid_card.pack(fill="both", expand=True, padx=0, pady=(5, 10))
 
-        self.tile_widgets = []
-        colors = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"]
+        # Days of week labels (Sun - Sat) on left column
+        day_labels_frame = ctk.CTkFrame(grid_card, fg_color="transparent")
+        day_labels_frame.pack(side="left", padx=(15, 8), pady=15, fill="y")
+
+        days_short = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+        for d in days_short:
+            lbl = ctk.CTkLabel(day_labels_frame, text=d, font=("SF Pro Text", 9, "bold"), text_color=self.text_secondary, height=22)
+            lbl.pack(pady=2)
+
+        # Grid of 7 rows x 24 columns for 24 weeks (~5.5 months of git commits)
+        self.heatmap_grid_frame = ctk.CTkFrame(grid_card, fg_color="transparent")
+        self.heatmap_grid_frame.pack(side="left", padx=5, pady=15, fill="both", expand=True)
+
+        self.heatmap_tiles = []
+        self.tile_dates = {}  # Map (row, col) to YYYY-MM-DD
 
         for row in range(7):
             row_tiles = []
-            for col in range(20):
-                init_color = colors[0] if (row + col) % 3 != 0 else colors[1]
-                tile = ctk.CTkFrame(grid_card, width=22, height=22, fg_color=init_color, corner_radius=4)
-                tile.grid(row=row, column=col, padx=3, pady=3)
+            for col in range(24):
+                tile = ctk.CTkFrame(self.heatmap_grid_frame, width=22, height=22, fg_color="#161b22", corner_radius=4)
+                tile.grid(row=row, column=col, padx=3, pady=2)
                 row_tiles.append(tile)
-            self.tile_widgets.append(row_tiles)
+            self.heatmap_tiles.append(row_tiles)
 
+        # Hover Info Bar at bottom
+        self.heatmap_info_lbl = ctk.CTkLabel(container, text="Hover over any square to view date & commit count", font=("SF Pro Text", 11), text_color=self.accent_cyan)
+        self.heatmap_info_lbl.pack(anchor="w", pady=(2, 0))
+
+        # Legend at bottom right
         legend_frame = ctk.CTkFrame(grid_card, fg_color="transparent")
-        legend_frame.grid(row=8, column=0, columnspan=20, sticky="e", pady=(15, 0))
+        legend_frame.pack(side="right", padx=15, pady=15, anchor="se")
 
         ctk.CTkLabel(legend_frame, text="Less", font=("SF Pro Text", 10), text_color=self.text_secondary).pack(side="left", padx=4)
+        colors = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"]
         for c in colors:
             ctk.CTkFrame(legend_frame, width=14, height=14, fg_color=c, corner_radius=3).pack(side="left", padx=2)
         ctk.CTkLabel(legend_frame, text="More", font=("SF Pro Text", 10), text_color=self.text_secondary).pack(side="left", padx=4)
 
-    def trigger_heatmap_update(self):
-        colors = ["#006d32", "#26a641", "#39d353"]
-        r = random.randint(0, 6)
-        c = random.randint(0, 19)
-        self.tile_widgets[r][c].configure(fg_color=random.choice(colors))
+    def fetch_and_render_git_heatmap(self):
+        """Queries target Git repository history and updates heatmap grid with real commit counts."""
+        repo_path = self.repo_entry.get().strip()
+        if not os.path.exists(repo_path):
+            self.log("WARN", f"Repository path not found for heatmap sync: {repo_path}")
+            return
+
+        def _worker():
+            try:
+                repo = Repo(repo_path)
+                commit_counts = Counter()
+                total_commits_count = 0
+
+                # Iterate commits up to 2000
+                for commit in repo.iter_commits(max_count=2000):
+                    c_date = datetime.fromtimestamp(commit.committed_date).strftime("%Y-%m-%d")
+                    commit_counts[c_date] += 1
+                    total_commits_count += 1
+
+                self.total_commits = total_commits_count
+
+                # Calculate date matrix for 7 rows x 24 columns
+                today = datetime.now().date()
+                # Start date calculation: 23 weeks back + offset to start on Sunday
+                start_offset_days = 7 * 23 + (today.weekday() + 1) % 7
+                start_date = today - timedelta(days=start_offset_days)
+
+                colors = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"]
+
+                # Calculate active streak (consecutive days leading up to today)
+                streak = 0
+                check_day = today
+                while True:
+                    day_str = check_day.strftime("%Y-%m-%d")
+                    if commit_counts.get(day_str, 0) > 0:
+                        streak += 1
+                        check_day -= timedelta(days=1)
+                    else:
+                        # Allow today to be 0 if yesterday was active
+                        if check_day == today:
+                            check_day -= timedelta(days=1)
+                            continue
+                        break
+                self.streak_days = streak
+
+                # Update UI elements on main thread
+                def _update_ui():
+                    self.card1_val.configure(text=str(self.total_commits))
+                    self.card2_val.configure(text=f"🔥 {self.streak_days} Day{'s' if self.streak_days != 1 else ''}")
+
+                    for col in range(24):
+                        for row in range(7):
+                            cell_date = start_date + timedelta(days=col * 7 + row)
+                            date_str = cell_date.strftime("%Y-%m-%d")
+                            count = commit_counts.get(date_str, 0)
+
+                            # Determine intensity color
+                            if count == 0:
+                                color = colors[0]
+                            elif count == 1:
+                                color = colors[1]
+                            elif 2 <= count <= 4:
+                                color = colors[2]
+                            elif 5 <= count <= 9:
+                                color = colors[3]
+                            else:
+                                color = colors[4]
+
+                            tile = self.heatmap_tiles[row][col]
+                            tile.configure(fg_color=color)
+
+                            # Bind hover tooltip event
+                            msg = f"📅 {date_str}  —  {count} commit{'s' if count != 1 else ''}"
+                            tile.bind("<Enter>", lambda e, m=msg: self.heatmap_info_lbl.configure(text=m))
+                            tile.bind("<Leave>", lambda e: self.heatmap_info_lbl.configure(text="Hover over any square to view date & commit count"))
+
+                self.after(0, _update_ui)
+                self.log("INFO", f"Git Heatmap synchronized with {total_commits_count} commits across repository.")
+
+            except Exception as e:
+                self.log("ERROR", f"Heatmap sync error: {e}")
+
+        threading.Thread(target=_worker, daemon=True).start()
 
     def build_logs_tab(self):
         log_card = ctk.CTkFrame(self.tab_logs, fg_color="transparent")
@@ -524,6 +626,7 @@ class ModernAutoCommitterApp(ctk.CTk):
             self.nav_btn_dash.configure(fg_color="transparent", text_color=self.text_secondary)
             self.nav_btn_heatmap.configure(fg_color=self.accent_indigo, text_color="#ffffff")
             self.nav_btn_logs.configure(fg_color="transparent", text_color=self.text_secondary)
+            self.fetch_and_render_git_heatmap()
         elif tab_key == "logs":
             self.tabview.set("Execution Console")
             self.nav_btn_dash.configure(fg_color="transparent", text_color=self.text_secondary)
@@ -559,6 +662,7 @@ class ModernAutoCommitterApp(ctk.CTk):
         if selected_dir:
             self.repo_entry.delete(0, "end")
             self.repo_entry.insert(0, selected_dir)
+            self.fetch_and_render_git_heatmap()
 
     def update_next_run_time(self):
         if not self.is_running:
@@ -604,14 +708,11 @@ class ModernAutoCommitterApp(ctk.CTk):
             origin = repo.remote(name="origin")
             origin.push()
 
-            self.total_commits += 1
             self.last_commit_str = now_tz.strftime("%H:%M:%S")
-
-            self.after(0, lambda: self.card1_val.configure(text=str(self.total_commits)))
             self.after(0, lambda: self.card3_val.configure(text=self.last_commit_str))
 
-            # Update Heatmap
-            self.after(0, self.trigger_heatmap_update)
+            # Synchronize Real Git Heatmap & Total Commits
+            self.after(0, self.fetch_and_render_git_heatmap)
 
             prefix = "Manual" if is_manual else "Scheduled"
             self.log("SUCCESS", f"{prefix} commit & push successful: '{full_msg}'")
@@ -641,7 +742,6 @@ class ModernAutoCommitterApp(ctk.CTk):
         self.is_running = True
         self.stop_event.clear()
 
-        # UI State Updates
         self.sidebar_status_badge.configure(text="● SYSTEM ACTIVE", text_color=self.accent_emerald, fg_color="#122a22")
         self.start_btn.configure(state="disabled")
         self.stop_btn.configure(state="normal")
