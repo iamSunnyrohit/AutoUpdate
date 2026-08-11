@@ -25,8 +25,8 @@ import schedule
 
 ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 
-# CustomTkinter Configuration
-ctk.set_appearance_mode("Dark")
+# Set Light Appearance Mode as specified in design mockups
+ctk.set_appearance_mode("Light")
 ctk.set_default_color_theme("blue")
 
 COMMON_TIMEZONES = [
@@ -93,7 +93,7 @@ class ModernAutoCommitterApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("AutoUpdate Pro — Mixwellx Modern Dashboard")
+        self.title("AutoUpdate Pro — Digital Activity & Streak Controller")
         self.geometry("1120x780")
         self.minsize(980, 680)
 
@@ -124,18 +124,18 @@ class ModernAutoCommitterApp(ctk.CTk):
         self.unit_val = "Minutes"
         self.active_tz = "Asia/Kolkata"
 
-        # Theme Colors (Mixwellx Modern Dark Palette)
-        self.bg_main = "#0a0c16"
-        self.bg_sidebar = "#111425"
-        self.card_bg = "#181c33"
-        self.card_border = "#252b4a"
-        self.accent_indigo = "#6366f1"
-        self.accent_purple = "#8b5cf6"
-        self.accent_cyan = "#06b6d4"
-        self.accent_emerald = "#10b981"
-        self.accent_rose = "#f43f5e"
-        self.text_primary = "#f8fafc"
-        self.text_secondary = "#94a3b8"
+        # Theme Colors (Exact Light Theme Palette from Design Refresh)
+        self.bg_main = "#f0f4f9"
+        self.bg_sidebar = "#e0e8f5"
+        self.card_bg = "#ffffff"
+        self.card_border = "#cbd5e1"
+        self.input_bg = "#dbeafe"
+        self.accent_primary = "#0891b2"    # Deep Cyan / Sky Blue (#0891B2)
+        self.accent_secondary = "#ea580c"  # Coral / Warm Orange (#EA580C)
+        self.accent_emerald = "#059669"
+        self.accent_rose = "#dc2626"
+        self.text_primary = "#1e293b"      # Deep Slate Dark Text (#1E293B)
+        self.text_secondary = "#64748b"
 
         self.configure(fg_color=self.bg_main)
 
@@ -161,7 +161,7 @@ class ModernAutoCommitterApp(ctk.CTk):
         self.after(1000, self.update_live_clock)
         self.after(500, self.fetch_and_render_git_heatmap)
 
-        self.log("INFO", "AutoUpdate Pro initialized. Git Heatmap active & connected to repository history.")
+        self.log("INFO", "AutoUpdate Pro Light Dashboard active. Configured with Luminous Flux Light theme.")
 
     def setup_grid_layout(self):
         self.grid_columnconfigure(1, weight=1)
@@ -173,7 +173,7 @@ class ModernAutoCommitterApp(ctk.CTk):
         self.sidebar.grid_rowconfigure(7, weight=1)
 
         brand_frame = ctk.CTkFrame(self.sidebar, fg_color="transparent")
-        brand_frame.pack(padx=20, pady=(25, 20), anchor="w")
+        brand_frame.pack(padx=20, pady=(25, 15), anchor="w")
 
         if self.img_bolt:
             brand_icon = ctk.CTkLabel(brand_frame, image=self.img_bolt, text="")
@@ -181,10 +181,10 @@ class ModernAutoCommitterApp(ctk.CTk):
             brand_icon = ctk.CTkLabel(brand_frame, text="⚡", font=("SF Pro Display", 24))
         brand_icon.pack(side="left", padx=(0, 10))
 
-        brand_title = ctk.CTkLabel(brand_frame, text="AutoUpdate", font=("SF Pro Display", 18, "bold"), text_color=self.text_primary)
+        brand_title = ctk.CTkLabel(brand_frame, text="AutoUpdate", font=("SF Pro Display", 18, "bold"), text_color=self.accent_primary)
         brand_title.pack(side="left")
 
-        pro_badge = ctk.CTkLabel(brand_frame, text=" PRO", font=("SF Pro Display", 10, "bold"), text_color=self.accent_indigo)
+        pro_badge = ctk.CTkLabel(brand_frame, text=" PRO", font=("SF Pro Display", 10, "bold"), text_color=self.accent_primary)
         pro_badge.pack(side="left")
 
         self.sidebar_status_badge = ctk.CTkLabel(
@@ -192,7 +192,7 @@ class ModernAutoCommitterApp(ctk.CTk):
             text="● SYSTEM STOPPED",
             font=("SF Pro Display", 11, "bold"),
             text_color=self.accent_rose,
-            fg_color="#2b1725",
+            fg_color="#fee2e2",
             corner_radius=12,
             padx=12,
             pady=4,
@@ -207,9 +207,9 @@ class ModernAutoCommitterApp(ctk.CTk):
             image=self.img_dash,
             compound="left",
             font=("SF Pro Text", 13, "bold"),
-            fg_color=self.accent_indigo,
+            fg_color=self.accent_primary,
             text_color="#ffffff",
-            hover_color="#4f46e5",
+            hover_color="#0e7490",
             anchor="w",
             corner_radius=8,
             height=40,
@@ -224,7 +224,7 @@ class ModernAutoCommitterApp(ctk.CTk):
             compound="left",
             font=("SF Pro Text", 13),
             fg_color="transparent",
-            text_color=self.text_secondary,
+            text_color=self.text_primary,
             hover_color=self.card_bg,
             anchor="w",
             corner_radius=8,
@@ -240,7 +240,7 @@ class ModernAutoCommitterApp(ctk.CTk):
             compound="left",
             font=("SF Pro Text", 13),
             fg_color="transparent",
-            text_color=self.text_secondary,
+            text_color=self.text_primary,
             hover_color=self.card_bg,
             anchor="w",
             corner_radius=8,
@@ -257,9 +257,9 @@ class ModernAutoCommitterApp(ctk.CTk):
 
         if self.img_clock:
             ctk.CTkLabel(tz_header, image=self.img_clock, text="").pack(side="left", padx=(0, 6))
-        ctk.CTkLabel(tz_header, text="LIVE TIME (IST)", font=("SF Pro Text", 10, "bold"), text_color=self.accent_cyan).pack(side="left")
+        ctk.CTkLabel(tz_header, text="LIVE TIME (IST)", font=("SF Pro Text", 10, "bold"), text_color=self.text_secondary).pack(side="left")
 
-        self.clock_lbl = ctk.CTkLabel(tz_card, text="00:00:00 IST", font=("SF Pro Display", 14, "bold"), text_color=self.text_primary)
+        self.clock_lbl = ctk.CTkLabel(tz_card, text="00:00:00 IST", font=("SF Pro Display", 16, "bold"), text_color=self.text_primary)
         self.clock_lbl.pack(padx=12, pady=(0, 10), anchor="w")
 
     def build_main_header(self):
@@ -283,8 +283,8 @@ class ModernAutoCommitterApp(ctk.CTk):
             image=self.img_push,
             compound="left",
             font=("SF Pro Text", 12, "bold"),
-            fg_color=self.accent_purple,
-            hover_color="#7c3aed",
+            fg_color=self.accent_primary,
+            hover_color="#0e7490",
             height=38,
             corner_radius=8,
             command=self.commit_now,
@@ -299,29 +299,29 @@ class ModernAutoCommitterApp(ctk.CTk):
         # Card 1: Total Commits
         c1 = ctk.CTkFrame(stats_container, fg_color=self.card_bg, corner_radius=12, border_width=1, border_color=self.card_border)
         c1.grid(row=0, column=0, sticky="ew", padx=(0, 8))
-        ctk.CTkLabel(c1, text="Total Commits", font=("SF Pro Text", 11), text_color=self.text_secondary).pack(padx=15, pady=(12, 2), anchor="w")
-        self.card1_val = ctk.CTkLabel(c1, text="0", font=("SF Pro Display", 22, "bold"), text_color=self.accent_emerald)
+        ctk.CTkLabel(c1, text="TOTAL COMMITS", font=("SF Pro Text", 10, "bold"), text_color=self.text_secondary).pack(padx=15, pady=(12, 2), anchor="w")
+        self.card1_val = ctk.CTkLabel(c1, text="0", font=("SF Pro Display", 24, "bold"), text_color=self.accent_secondary)
         self.card1_val.pack(padx=15, pady=(0, 12), anchor="w")
 
         # Card 2: Active Streak
         c2 = ctk.CTkFrame(stats_container, fg_color=self.card_bg, corner_radius=12, border_width=1, border_color=self.card_border)
         c2.grid(row=0, column=1, sticky="ew", padx=4)
-        ctk.CTkLabel(c2, text="Active Streak", font=("SF Pro Text", 11), text_color=self.text_secondary).pack(padx=15, pady=(12, 2), anchor="w")
-        self.card2_val = ctk.CTkLabel(c2, text="🔥 0 Days", font=("SF Pro Display", 22, "bold"), text_color=self.accent_indigo)
+        ctk.CTkLabel(c2, text="ACTIVE STREAK", font=("SF Pro Text", 10, "bold"), text_color=self.text_secondary).pack(padx=15, pady=(12, 2), anchor="w")
+        self.card2_val = ctk.CTkLabel(c2, text="🔥 0 Days", font=("SF Pro Display", 22, "bold"), text_color=self.accent_primary)
         self.card2_val.pack(padx=15, pady=(0, 12), anchor="w")
 
         # Card 3: Last Commit Time
         c3 = ctk.CTkFrame(stats_container, fg_color=self.card_bg, corner_radius=12, border_width=1, border_color=self.card_border)
         c3.grid(row=0, column=2, sticky="ew", padx=4)
-        ctk.CTkLabel(c3, text="Last Execution", font=("SF Pro Text", 11), text_color=self.text_secondary).pack(padx=15, pady=(12, 2), anchor="w")
-        self.card3_val = ctk.CTkLabel(c3, text="Never", font=("SF Pro Display", 15, "bold"), text_color=self.text_primary)
+        ctk.CTkLabel(c3, text="LAST EXECUTION", font=("SF Pro Text", 10, "bold"), text_color=self.text_secondary).pack(padx=15, pady=(12, 2), anchor="w")
+        self.card3_val = ctk.CTkLabel(c3, text="Never", font=("SF Pro Display", 18, "bold"), text_color=self.text_primary)
         self.card3_val.pack(padx=15, pady=(4, 12), anchor="w")
 
         # Card 4: Next Scheduled Run
         c4 = ctk.CTkFrame(stats_container, fg_color=self.card_bg, corner_radius=12, border_width=1, border_color=self.card_border)
         c4.grid(row=0, column=3, sticky="ew", padx=(8, 0))
-        ctk.CTkLabel(c4, text="Next Run", font=("SF Pro Text", 11), text_color=self.text_secondary).pack(padx=15, pady=(12, 2), anchor="w")
-        self.card4_val = ctk.CTkLabel(c4, text="N/A", font=("SF Pro Display", 15, "bold"), text_color=self.accent_cyan)
+        ctk.CTkLabel(c4, text="NEXT RUN", font=("SF Pro Text", 10, "bold"), text_color=self.text_secondary).pack(padx=15, pady=(12, 2), anchor="w")
+        self.card4_val = ctk.CTkLabel(c4, text="N/A", font=("SF Pro Display", 18, "bold"), text_color=self.text_primary)
         self.card4_val.pack(padx=15, pady=(4, 12), anchor="w")
 
     def build_tabbed_workspace(self):
@@ -329,8 +329,8 @@ class ModernAutoCommitterApp(ctk.CTk):
             self.main_container,
             fg_color=self.card_bg,
             segmented_button_fg_color=self.bg_sidebar,
-            segmented_button_selected_color=self.accent_indigo,
-            segmented_button_selected_hover_color="#4f46e5",
+            segmented_button_selected_color=self.input_bg,
+            segmented_button_selected_hover_color=self.card_border,
             corner_radius=14,
         )
         self.tabview.grid(row=3, column=0, sticky="nsew")
@@ -349,36 +349,36 @@ class ModernAutoCommitterApp(ctk.CTk):
         cfg_frame = ctk.CTkFrame(self.tab_dash, fg_color="transparent")
         cfg_frame.grid(row=0, column=0, sticky="nsew", padx=15, pady=15)
 
-        ctk.CTkLabel(cfg_frame, text="Repository & Output Settings", font=("SF Pro Display", 14, "bold"), text_color=self.accent_cyan).pack(anchor="w", pady=(0, 10))
+        ctk.CTkLabel(cfg_frame, text="Repository & Output Settings", font=("SF Pro Display", 18, "bold"), text_color=self.accent_secondary).pack(anchor="w", pady=(0, 10))
 
         ctk.CTkLabel(cfg_frame, text="Git Repository Directory:", font=("SF Pro Text", 11), text_color=self.text_secondary).pack(anchor="w", pady=(5, 2))
         repo_row = ctk.CTkFrame(cfg_frame, fg_color="transparent")
         repo_row.pack(fill="x", pady=(0, 10))
 
-        self.repo_entry = ctk.CTkEntry(repo_row, fg_color=self.bg_sidebar, border_color=self.card_border, font=("SF Pro Text", 11), height=35)
+        self.repo_entry = ctk.CTkEntry(repo_row, fg_color=self.input_bg, border_color=self.card_border, text_color=self.text_primary, font=("SF Pro Text", 11), height=35)
         self.repo_entry.insert(0, os.getcwd())
         self.repo_entry.pack(side="left", fill="x", expand=True, padx=(0, 8))
 
-        browse_btn = ctk.CTkButton(repo_row, text="Browse", image=self.img_folder, compound="left", width=85, height=35, fg_color="#334155", hover_color="#475569", command=self.browse_repo)
+        browse_btn = ctk.CTkButton(repo_row, text="Browse", image=self.img_folder, compound="left", width=85, height=35, fg_color="#dbeafe", text_color=self.text_primary, hover_color="#bfdbfe", command=self.browse_repo)
         browse_btn.pack(side="right")
 
         ctk.CTkLabel(cfg_frame, text="Target Timezone:", font=("SF Pro Text", 11), text_color=self.text_secondary).pack(anchor="w", pady=(5, 2))
-        self.tz_combo = ctk.CTkComboBox(cfg_frame, values=COMMON_TIMEZONES, fg_color=self.bg_sidebar, border_color=self.card_border, height=35, font=("SF Pro Text", 11))
+        self.tz_combo = ctk.CTkComboBox(cfg_frame, values=COMMON_TIMEZONES, fg_color=self.input_bg, border_color=self.card_border, text_color=self.text_primary, height=35, font=("SF Pro Text", 11))
         self.tz_combo.set("Asia/Kolkata (IST)")
         self.tz_combo.pack(fill="x", pady=(0, 10))
 
         ctk.CTkLabel(cfg_frame, text="Target Activity File:", font=("SF Pro Text", 11), text_color=self.text_secondary).pack(anchor="w", pady=(5, 2))
-        self.target_file_entry = ctk.CTkEntry(cfg_frame, fg_color=self.bg_sidebar, border_color=self.card_border, font=("SF Pro Text", 11), height=35)
+        self.target_file_entry = ctk.CTkEntry(cfg_frame, fg_color=self.input_bg, border_color=self.card_border, text_color=self.text_primary, font=("SF Pro Text", 11), height=35)
         self.target_file_entry.insert(0, "activity_log.txt")
         self.target_file_entry.pack(fill="x", pady=(0, 10))
 
         sch_frame = ctk.CTkFrame(self.tab_dash, fg_color="transparent")
         sch_frame.grid(row=0, column=1, sticky="nsew", padx=15, pady=15)
 
-        ctk.CTkLabel(sch_frame, text="Trigger Frequency & Message", font=("SF Pro Display", 14, "bold"), text_color=self.accent_indigo).pack(anchor="w", pady=(0, 10))
+        ctk.CTkLabel(sch_frame, text="Trigger Frequency & Message", font=("SF Pro Display", 18, "bold"), text_color=self.accent_primary).pack(anchor="w", pady=(0, 10))
 
         ctk.CTkLabel(sch_frame, text="Commit Message:", font=("SF Pro Text", 11), text_color=self.text_secondary).pack(anchor="w", pady=(5, 2))
-        self.msg_entry = ctk.CTkEntry(sch_frame, fg_color=self.bg_sidebar, border_color=self.card_border, font=("SF Pro Text", 11), height=35)
+        self.msg_entry = ctk.CTkEntry(sch_frame, fg_color=self.input_bg, border_color=self.card_border, text_color=self.text_primary, font=("SF Pro Text", 11), height=35)
         self.msg_entry.insert(0, "chore: automated activity update")
         self.msg_entry.pack(fill="x", pady=(0, 8))
 
@@ -393,8 +393,9 @@ class ModernAutoCommitterApp(ctk.CTk):
                 width=55,
                 height=24,
                 font=("SF Pro Text", 10),
-                fg_color=self.bg_sidebar,
-                hover_color=self.card_border,
+                fg_color=self.input_bg,
+                text_color=self.text_primary,
+                hover_color="#bfdbfe",
                 command=lambda val=p: self.set_preset(val),
             )
             btn.pack(side="left", padx=2)
@@ -403,11 +404,11 @@ class ModernAutoCommitterApp(ctk.CTk):
         freq_row = ctk.CTkFrame(sch_frame, fg_color="transparent")
         freq_row.pack(fill="x", pady=(0, 15))
 
-        self.interval_entry = ctk.CTkEntry(freq_row, width=80, fg_color=self.bg_sidebar, border_color=self.card_border, font=("SF Pro Text", 11), height=35)
+        self.interval_entry = ctk.CTkEntry(freq_row, width=80, fg_color=self.input_bg, border_color=self.card_border, text_color=self.text_primary, font=("SF Pro Text", 11), height=35)
         self.interval_entry.insert(0, "1")
         self.interval_entry.pack(side="left", padx=(0, 10))
 
-        self.unit_combo = ctk.CTkComboBox(freq_row, values=["Seconds", "Minutes", "Hours"], width=120, fg_color=self.bg_sidebar, border_color=self.card_border, height=35)
+        self.unit_combo = ctk.CTkComboBox(freq_row, values=["Seconds", "Minutes", "Hours"], width=120, fg_color=self.input_bg, border_color=self.card_border, text_color=self.text_primary, height=35)
         self.unit_combo.set("Minutes")
         self.unit_combo.pack(side="left")
 
@@ -420,8 +421,9 @@ class ModernAutoCommitterApp(ctk.CTk):
             image=self.img_play,
             compound="left",
             font=("SF Pro Text", 12, "bold"),
-            fg_color=self.accent_emerald,
-            hover_color="#059669",
+            fg_color=self.accent_secondary,
+            text_color="#ffffff",
+            hover_color="#c2410c",
             height=42,
             corner_radius=8,
             command=self.start_scheduler,
@@ -436,7 +438,8 @@ class ModernAutoCommitterApp(ctk.CTk):
             width=95,
             font=("SF Pro Text", 12, "bold"),
             fg_color=self.accent_rose,
-            hover_color="#e11d48",
+            text_color="#ffffff",
+            hover_color="#b91c1c",
             height=42,
             corner_radius=8,
             state="disabled",
@@ -452,14 +455,13 @@ class ModernAutoCommitterApp(ctk.CTk):
         container = ctk.CTkFrame(self.tab_heatmap, fg_color="transparent")
         container.pack(fill="both", expand=True, padx=20, pady=15)
 
-        # Header Row with Refresh Button
         top_hdr = ctk.CTkFrame(container, fg_color="transparent")
         top_hdr.pack(fill="x", pady=(0, 10))
 
         titles_box = ctk.CTkFrame(top_hdr, fg_color="transparent")
         titles_box.pack(side="left")
 
-        ctk.CTkLabel(titles_box, text="GitHub Contribution Heatmap", font=("SF Pro Display", 15, "bold"), text_color=self.accent_emerald).pack(anchor="w")
+        ctk.CTkLabel(titles_box, text="GitHub Contribution Heatmap", font=("SF Pro Display", 16, "bold"), text_color=self.accent_primary).pack(anchor="w")
         ctk.CTkLabel(titles_box, text="Real-time Git commit activity mapped directly from repository history.", font=("SF Pro Text", 11), text_color=self.text_secondary).pack(anchor="w")
 
         sync_btn = ctk.CTkButton(
@@ -468,17 +470,16 @@ class ModernAutoCommitterApp(ctk.CTk):
             font=("SF Pro Text", 11, "bold"),
             width=110,
             height=32,
-            fg_color=self.accent_indigo,
-            hover_color="#4f46e5",
+            fg_color=self.accent_primary,
+            text_color="#ffffff",
+            hover_color="#0e7490",
             command=self.fetch_and_render_git_heatmap,
         )
         sync_btn.pack(side="right")
 
-        # Main Heatmap Card
         grid_card = ctk.CTkFrame(container, fg_color=self.bg_sidebar, corner_radius=12)
         grid_card.pack(fill="both", expand=True, padx=0, pady=(5, 10))
 
-        # Days of week labels (Sun - Sat) on left column
         day_labels_frame = ctk.CTkFrame(grid_card, fg_color="transparent")
         day_labels_frame.pack(side="left", padx=(15, 8), pady=15, fill="y")
 
@@ -487,37 +488,33 @@ class ModernAutoCommitterApp(ctk.CTk):
             lbl = ctk.CTkLabel(day_labels_frame, text=d, font=("SF Pro Text", 9, "bold"), text_color=self.text_secondary, height=22)
             lbl.pack(pady=2)
 
-        # Grid of 7 rows x 24 columns for 24 weeks (~5.5 months of git commits)
         self.heatmap_grid_frame = ctk.CTkFrame(grid_card, fg_color="transparent")
         self.heatmap_grid_frame.pack(side="left", padx=5, pady=15, fill="both", expand=True)
 
         self.heatmap_tiles = []
-        self.tile_dates = {}  # Map (row, col) to YYYY-MM-DD
+        self.tile_dates = {}
 
         for row in range(7):
             row_tiles = []
             for col in range(24):
-                tile = ctk.CTkFrame(self.heatmap_grid_frame, width=22, height=22, fg_color="#161b22", corner_radius=4)
+                tile = ctk.CTkFrame(self.heatmap_grid_frame, width=22, height=22, fg_color="#ebedf0", corner_radius=4)
                 tile.grid(row=row, column=col, padx=3, pady=2)
                 row_tiles.append(tile)
             self.heatmap_tiles.append(row_tiles)
 
-        # Hover Info Bar at bottom
-        self.heatmap_info_lbl = ctk.CTkLabel(container, text="Hover over any square to view date & commit count", font=("SF Pro Text", 11), text_color=self.accent_cyan)
+        self.heatmap_info_lbl = ctk.CTkLabel(container, text="Hover over any square to view date & commit count", font=("SF Pro Text", 11), text_color=self.accent_primary)
         self.heatmap_info_lbl.pack(anchor="w", pady=(2, 0))
 
-        # Legend at bottom right
         legend_frame = ctk.CTkFrame(grid_card, fg_color="transparent")
         legend_frame.pack(side="right", padx=15, pady=15, anchor="se")
 
         ctk.CTkLabel(legend_frame, text="Less", font=("SF Pro Text", 10), text_color=self.text_secondary).pack(side="left", padx=4)
-        colors = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"]
+        colors = ["#ebedf0", "#9be9a8", "#40c463", "#30a14e", "#216e39"]
         for c in colors:
             ctk.CTkFrame(legend_frame, width=14, height=14, fg_color=c, corner_radius=3).pack(side="left", padx=2)
         ctk.CTkLabel(legend_frame, text="More", font=("SF Pro Text", 10), text_color=self.text_secondary).pack(side="left", padx=4)
 
     def fetch_and_render_git_heatmap(self):
-        """Queries target Git repository history and updates heatmap grid with real commit counts."""
         repo_path = self.repo_entry.get().strip()
         if not os.path.exists(repo_path):
             self.log("WARN", f"Repository path not found for heatmap sync: {repo_path}")
@@ -529,7 +526,6 @@ class ModernAutoCommitterApp(ctk.CTk):
                 commit_counts = Counter()
                 total_commits_count = 0
 
-                # Iterate commits up to 2000
                 for commit in repo.iter_commits(max_count=2000):
                     c_date = datetime.fromtimestamp(commit.committed_date).strftime("%Y-%m-%d")
                     commit_counts[c_date] += 1
@@ -537,15 +533,12 @@ class ModernAutoCommitterApp(ctk.CTk):
 
                 self.total_commits = total_commits_count
 
-                # Calculate date matrix for 7 rows x 24 columns
                 today = datetime.now().date()
-                # Start date calculation: 23 weeks back + offset to start on Sunday
                 start_offset_days = 7 * 23 + (today.weekday() + 1) % 7
                 start_date = today - timedelta(days=start_offset_days)
 
-                colors = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"]
+                colors = ["#ebedf0", "#9be9a8", "#40c463", "#30a14e", "#216e39"]
 
-                # Calculate active streak (consecutive days leading up to today)
                 streak = 0
                 check_day = today
                 while True:
@@ -554,14 +547,12 @@ class ModernAutoCommitterApp(ctk.CTk):
                         streak += 1
                         check_day -= timedelta(days=1)
                     else:
-                        # Allow today to be 0 if yesterday was active
                         if check_day == today:
                             check_day -= timedelta(days=1)
                             continue
                         break
                 self.streak_days = streak
 
-                # Update UI elements on main thread
                 def _update_ui():
                     self.card1_val.configure(text=str(self.total_commits))
                     self.card2_val.configure(text=f"🔥 {self.streak_days} Day{'s' if self.streak_days != 1 else ''}")
@@ -572,7 +563,6 @@ class ModernAutoCommitterApp(ctk.CTk):
                             date_str = cell_date.strftime("%Y-%m-%d")
                             count = commit_counts.get(date_str, 0)
 
-                            # Determine intensity color
                             if count == 0:
                                 color = colors[0]
                             elif count == 1:
@@ -587,7 +577,6 @@ class ModernAutoCommitterApp(ctk.CTk):
                             tile = self.heatmap_tiles[row][col]
                             tile.configure(fg_color=color)
 
-                            # Bind hover tooltip event
                             msg = f"📅 {date_str}  —  {count} commit{'s' if count != 1 else ''}"
                             tile.bind("<Enter>", lambda e, m=msg: self.heatmap_info_lbl.configure(text=m))
                             tile.bind("<Leave>", lambda e: self.heatmap_info_lbl.configure(text="Hover over any square to view date & commit count"))
@@ -607,31 +596,31 @@ class ModernAutoCommitterApp(ctk.CTk):
         top_row = ctk.CTkFrame(log_card, fg_color="transparent")
         top_row.pack(fill="x", pady=(0, 10))
 
-        ctk.CTkLabel(top_row, text="Execution Terminal & Activity Log", font=("SF Pro Display", 14, "bold"), text_color=self.accent_indigo).pack(side="left")
+        ctk.CTkLabel(top_row, text="Execution Terminal & Activity Log", font=("SF Pro Display", 16, "bold"), text_color=self.accent_primary).pack(side="left")
 
-        clear_btn = ctk.CTkButton(top_row, text="Clear Console", width=90, height=28, font=("SF Pro Text", 11), fg_color="#334155", hover_color="#475569", command=self.clear_logs)
+        clear_btn = ctk.CTkButton(top_row, text="Clear Console", width=90, height=28, font=("SF Pro Text", 11), fg_color="#cbd5e1", text_color=self.text_primary, hover_color="#94a3b8", command=self.clear_logs)
         clear_btn.pack(side="right")
 
-        self.log_textbox = ctk.CTkTextbox(log_card, fg_color=self.bg_sidebar, text_color=self.text_primary, font=("Menlo", 11), corner_radius=10, wrap="word")
+        self.log_textbox = ctk.CTkTextbox(log_card, fg_color="#0f172a", text_color="#f8fafc", font=("Menlo", 11), corner_radius=10, wrap="word")
         self.log_textbox.pack(fill="both", expand=True)
 
     def switch_tab(self, tab_key):
         if tab_key == "dash":
             self.tabview.set("Automation Dashboard")
-            self.nav_btn_dash.configure(fg_color=self.accent_indigo, text_color="#ffffff")
-            self.nav_btn_heatmap.configure(fg_color="transparent", text_color=self.text_secondary)
-            self.nav_btn_logs.configure(fg_color="transparent", text_color=self.text_secondary)
+            self.nav_btn_dash.configure(fg_color=self.accent_primary, text_color="#ffffff")
+            self.nav_btn_heatmap.configure(fg_color="transparent", text_color=self.text_primary)
+            self.nav_btn_logs.configure(fg_color="transparent", text_color=self.text_primary)
         elif tab_key == "heatmap":
             self.tabview.set("Contribution Heatmap")
-            self.nav_btn_dash.configure(fg_color="transparent", text_color=self.text_secondary)
-            self.nav_btn_heatmap.configure(fg_color=self.accent_indigo, text_color="#ffffff")
-            self.nav_btn_logs.configure(fg_color="transparent", text_color=self.text_secondary)
+            self.nav_btn_dash.configure(fg_color="transparent", text_color=self.text_primary)
+            self.nav_btn_heatmap.configure(fg_color=self.accent_primary, text_color="#ffffff")
+            self.nav_btn_logs.configure(fg_color="transparent", text_color=self.text_primary)
             self.fetch_and_render_git_heatmap()
         elif tab_key == "logs":
             self.tabview.set("Execution Console")
-            self.nav_btn_dash.configure(fg_color="transparent", text_color=self.text_secondary)
-            self.nav_btn_heatmap.configure(fg_color="transparent", text_color=self.text_secondary)
-            self.nav_btn_logs.configure(fg_color=self.accent_indigo, text_color="#ffffff")
+            self.nav_btn_dash.configure(fg_color="transparent", text_color=self.text_primary)
+            self.nav_btn_heatmap.configure(fg_color="transparent", text_color=self.text_primary)
+            self.nav_btn_logs.configure(fg_color=self.accent_primary, text_color="#ffffff")
 
     def update_live_clock(self):
         tz_name = clean_tz_name(self.tz_combo.get())
@@ -711,7 +700,6 @@ class ModernAutoCommitterApp(ctk.CTk):
             self.last_commit_str = now_tz.strftime("%H:%M:%S")
             self.after(0, lambda: self.card3_val.configure(text=self.last_commit_str))
 
-            # Synchronize Real Git Heatmap & Total Commits
             self.after(0, self.fetch_and_render_git_heatmap)
 
             prefix = "Manual" if is_manual else "Scheduled"
@@ -742,7 +730,7 @@ class ModernAutoCommitterApp(ctk.CTk):
         self.is_running = True
         self.stop_event.clear()
 
-        self.sidebar_status_badge.configure(text="● SYSTEM ACTIVE", text_color=self.accent_emerald, fg_color="#122a22")
+        self.sidebar_status_badge.configure(text="● SYSTEM ACTIVE", text_color=self.accent_emerald, fg_color="#d1fae5")
         self.start_btn.configure(state="disabled")
         self.stop_btn.configure(state="normal")
         self.repo_entry.configure(state="disabled")
@@ -778,7 +766,7 @@ class ModernAutoCommitterApp(ctk.CTk):
         self.stop_event.set()
         schedule.clear()
 
-        self.sidebar_status_badge.configure(text="● SYSTEM STOPPED", text_color=self.accent_rose, fg_color="#2b1725")
+        self.sidebar_status_badge.configure(text="● SYSTEM STOPPED", text_color=self.accent_rose, fg_color="#fee2e2")
         self.start_btn.configure(state="normal")
         self.stop_btn.configure(state="disabled")
         self.repo_entry.configure(state="normal")
