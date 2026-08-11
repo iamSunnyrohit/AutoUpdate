@@ -12,17 +12,7 @@ from git import Repo, GitCommandError
 from PIL import Image, ImageTk
 import schedule
 
-# Set native macOS Dock Icon & Process Title via AppKit
 ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
-try:
-    from AppKit import NSApplication, NSImage
-    app_icon_path = os.path.join(ASSETS_DIR, "app_icon.png")
-    if os.path.exists(app_icon_path):
-        ns_app = NSApplication.sharedApplication()
-        ns_img = NSImage.alloc().initWithContentsOfFile_(app_icon_path)
-        ns_app.setApplicationIconImage_(ns_img)
-except Exception:
-    pass
 
 # CustomTkinter Configuration
 ctk.set_appearance_mode("Dark")
@@ -47,6 +37,20 @@ PRESET_MESSAGES = [
     "ci: automated streak update",
     "style: daily log maintenance",
 ]
+
+
+def set_macos_dock_icon():
+    """Sets native macOS Dock icon via AppKit if available."""
+    try:
+        from AppKit import NSApplication, NSImage
+        app_icon_path = os.path.join(ASSETS_DIR, "app_icon.png")
+        if os.path.exists(app_icon_path):
+            ns_app = NSApplication.sharedApplication()
+            ns_img = NSImage.alloc().initWithContentsOfFile_(app_icon_path)
+            if ns_app and ns_img:
+                ns_app.setApplicationIconImage_(ns_img)
+    except Exception:
+        pass
 
 
 def load_flaticon_image(icon_filename, size=(20, 20)):
@@ -91,6 +95,9 @@ class ModernAutoCommitterApp(ctk.CTk):
                 self.wm_iconphoto(True, self._photo_icon)
             except Exception:
                 pass
+
+        # Set macOS Dock Icon asynchronously after window creation
+        self.after(300, set_macos_dock_icon)
 
         # State Variables
         self.is_running = False
